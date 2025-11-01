@@ -1,100 +1,155 @@
 package com.example.demo.database;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import org.springframework.stereotype.Repository;
 
 @Repository
 public class Storage {
 
-	private List<Map<String, String>> db = new ArrayList<Map<String, String>>();
+	private final String URL = "jdbc:mysql://localhost:3306/employee_db";
+	private final String USER = "root";
+	private final String PASSWORD = null;
 
-	public boolean existsEmp(String employeeDetails) {
-		Map<String, String> record = new HashMap<String, String>();
-
-		for (int i = 0; i < db.size(); i++) {
-			record = db.get(i);
-			if (record.containsValue(employeeDetails))
-				return true;
+	public Storage() {
+		try {
+			Class.forName("com.mysql.cj.jdbc.Driver");
+			System.out.println("✅ MySQL Driver Loaded Successfully");
+		} catch (ClassNotFoundException e) {
+			System.out.println("❌ MySQL Driver Not Found: " + e.getMessage());
 		}
-		return false;
 	}
 
-
-	// Save Employees
+	// Helper method to get connection
+	private Connection getConnection()throws SQLException{
+		return DriverManager.getConnection(URL,USER, PASSWORD);
+			}
+	
+	// Create method
 	public void create(String employeeName, String employeeId, String employeeContacts, String gender, String email,
-			String address, String salary, String dept) {
-		Map<String, String> insert = new HashMap<String, String>();
-
-		insert.put("EmployeeId:", employeeId);
-		insert.put("EmployeeName:", employeeName);
-		insert.put("EmployeeContacts:", employeeContacts);
-		insert.put("EmployeeGender:", gender);
-		insert.put("EmployeeEmail:", email);
-		insert.put("EmployeeAddress:", address);
-		insert.put("EmployeeSalary:", salary);
-		insert.put("EmployeeDept:", dept);
-		db.add(insert);
-		System.out.println("Data stored successfully.\n" + db + "\n");
-	}
-
-	public void getAllEmployees() {
+			String address, String salary, String dept) throws SQLException{
+		String query = "INSERT INTO employees(id, name, contacts,gender,email,address,salary,department)" + "VALUES(?,?,?,?,?,?,?,?)";
 		
-		if (db.isEmpty()|| db==null|| db.size()==0) {
-			System.out.println("No employees found.");
-		}
-		else
-		System.out.println(db);
-	}
-
-	public void delete(String employeeId) {
-		boolean removed = false;
-
-		for (int i = 0; i < db.size(); i++) {
-			Map<String, String> record = db.get(i);
-			if (record.containsValue(employeeId)) {
-				db.remove(i);
-				removed = true;
-				System.out.println("Employee deleted successfully. Deleted employeeId: " + employeeId);
-				break; // Important: break to avoid IndexOutOfBounds after remove
+	    try (Connection con =getConnection(); PreparedStatement ps = con.prepareStatement(query)){
+	    	ps.setString(1, employeeId);
+	    	ps.setString(2, employeeName);
+	    	ps.setString(3,  employeeContacts);
+	    	ps.setString(4, gender);
+	    	ps.setString(5, email);
+	    	ps.setString(6, address);
+	    	ps.setString(7, salary);
+	    	ps.setString(8, dept);
+	        int rows = ps.executeUpdate();
+	        if(rows>0) {
+	        	System.out.println("Employee Details  Addes Successfully.");
+	        }
+	        else
+	        System.out.println("No Rows inserted.");
+	     }
+	    
+	    catch(SQLException e) {
+	    	System.out.println(" Error inserting employees ."+  e.getMessage());
+	    }
+}
+	
+	//Read Employee data
+	public void getAllEmployees(){
+		String query = "SELECT * FROM employees";
+		try(Connection con = getConnection(); PreparedStatement pst = con.prepareStatement(query);ResultSet rs = pst.executeQuery()){
+				
+			System.out.println("Employees list:");
+			while(rs.next()) {
+				System.out.println("ID:" + rs.getString("id") + ",Name:" + rs.getString("name") +  ",Contacts:" + rs.getString("contacts") 
+			                    	+ ", Gender:" + rs.getString("gender") + ",Email:" + rs.getString("email") + ",Address:"
+						            + rs.getString("address") + ",Salary: " + rs.getString("salary") + ",Department:"+rs.getString("department"));
 			}
+			
+			}
+		catch(SQLException e) {
+			System.out.println("Error Fetching Employees:" + e.getMessage());
 		}
-
-		if (!removed) {
-			System.out.println("Employee with ID " + employeeId + " not found.\n");
+		}
+	
+	//UPDATE 
+	public void update(String employeeId, String newContacts, String newEmail) throws SQLException {
+		String selectQuery = "SELECT contacts, email FROM employees WHERE id=?";
+		String updateQuery = "UPDATE employees SET contacts=?, email=? WHERE id=?";
+		
+		try (Connection con = getConnection(); PreparedStatement selectStmt = con.prepareStatement(selectQuery)) {
+		//step 1: fetch current employee details
+			  selectStmt.setString(1,employeeId);   
+			  ResultSet rs = selectStmt.executeQuery();
+			  
+			  if(!rs.next()) {
+				  System.out.println("Employee with Id" + employeeId + " not found");
+				  return;   
+			  }
+			  String currentContacts = rs.getString("contacts");
+			  String currentEmail = rs.getString("email");
+			  
+			  //compare new data with current data
+			  if(currentContacts.equals(newContacts)&&currentEmail.equals(currentEmail)) {
+				  System.out.println("No changes detected. Email and Contacts already same.");
+				  return;
+			  }
+			  
+			  try(PreparedStatement updateStmt = con.prepareStatement(updateQuery)){
+				  updateStmt.setString(1, newContacts);
+				  updateStmt.setString(2, newEmail);
+				  updateStmt.setString(3, employeeId);
+				  
+				  int rows = updateStmt.executeUpdate();
+				  if(rows>0) {
+					  System.out.println("Employee details updated successfully!");
+					  
+				  }
+				  else {
+					  System.out.println("Failed to update employee details.");
+				  }
+			  }
+			  
+			  catch(SQLException e) {
+				  System.out.println("Error updating employee."+e.getMessage());
+			  }
+			
 		}
 	}
-
-	public void removeAll() {
-		db = null;
-		System.out.println("All employees removed successfully.\n");
-
-	}
-
-	public void update(String employeeId, String employeeContacts, String employeeEmail) throws Exception {
-		Map<String, String> record = new HashMap<String, String>();
-		boolean empIdNotFound = false;
-		for (int i = 0; i < db.size(); i++) {
-			record = db.get(i);
-			if (!record.containsValue(employeeId)) {
-				empIdNotFound = true;
-			} else {
-				empIdNotFound = false;
-				if (record.containsValue(employeeContacts) && record.containsValue(employeeEmail)) {
-					System.out.println("Email and Contact already exists.");
-				} else {
-					record.put("EmployeeContacts:", employeeContacts);
-					record.put("EmployeeEmail:", employeeEmail);
-					System.out.println("Employee details Updated.");
-					break;
+		
+		//Delete (Single Employees)
+		public void delete(String employeeId) throws Exception {
+			String query =  "DELETE FROM employee WHERE id=?";
+			try(Connection con = getConnection(); PreparedStatement ps = con.prepareStatement(query)){
+				ps.setString(1, employeeId);
+				int rows = ps.executeUpdate();
+				
+				if(rows>0) {
+					System.out.println("Employee Deleted Successfully.");
 				}
+				else {
+					System.out.println("Employee Id not found!");
+				}
+				
+		}
+			catch(SQLException e) {
+				System.out.print("Error deleting employees:" + e.getMessage());
+			}
+	}
+		
+		//DELETE ALL
+		
+		public void removeALL() throws SQLException {
+			String query = "DELETE FROM employees";
+			try(Connection con = getConnection(); PreparedStatement ps = con.prepareStatement(query)){
+				int rows = ps.executeUpdate();
+				System.out.println("Deleted " + rows + " employees from table." );
+			}
+			
+			catch(SQLException e) {
+				System.out.println("Error deleting all employees:" + e.getMessage());
 			}
 		}
-		if (empIdNotFound == true)
-			System.out.println("EmployeeId Doesnt Exists.");
-	}
-
+	
 }
