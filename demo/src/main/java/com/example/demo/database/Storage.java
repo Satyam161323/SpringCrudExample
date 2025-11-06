@@ -7,6 +7,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import org.springframework.stereotype.Repository;
 
+import com.example.demo.model.Employee;
+
+
 @Repository
 public class Storage {
 
@@ -29,19 +32,18 @@ public class Storage {
 			}
 	
 	// Create method
-	public void create(String employeeName, String employeeId, String employeeContacts, String gender, String email,
-			String address, String salary, String dept) throws SQLException{
+	public void create( Employee employee) throws SQLException{
 		String query = "INSERT INTO employees(id, name, contacts,gender,email,address,salary,department)" + "VALUES(?,?,?,?,?,?,?,?)";
 		
 	    try (Connection con =getConnection(); PreparedStatement ps = con.prepareStatement(query)){
-	    	ps.setString(1, employeeId);
-	    	ps.setString(2, employeeName);
-	    	ps.setString(3,  employeeContacts);
-	    	ps.setString(4, gender);
-	    	ps.setString(5, email);
-	    	ps.setString(6, address);
-	    	ps.setString(7, salary);
-	    	ps.setString(8, dept);
+	    	ps.setString(1, employee.getEmployeeId());
+	    	ps.setString(2, employee.getEmployeeName());
+	    	ps.setString(3, employee.getContacts());
+	    	ps.setString(4, employee.getGender());
+	    	ps.setString(5, employee.getEmail());
+	    	ps.setString(6, employee.getAddress());
+	    	ps.setString(7, employee.getSalary());
+	    	ps.setString(8, employee.getDepartment());
 	        int rows = ps.executeUpdate();
 	        if(rows>0) {
 	        	System.out.println("Employee Details  Addes Successfully.");
@@ -74,32 +76,32 @@ public class Storage {
 		}
 	
 	//UPDATE 
-	public void update(String employeeId, String newContacts, String newEmail) throws SQLException {
+	public void update(Employee employee ) throws SQLException {
 		String selectQuery = "SELECT contacts, email FROM employees WHERE id=?";
 		String updateQuery = "UPDATE employees SET contacts=?, email=? WHERE id=?";
 		
 		try (Connection con = getConnection(); PreparedStatement selectStmt = con.prepareStatement(selectQuery)) {
 		//step 1: fetch current employee details
-			  selectStmt.setString(1,employeeId);   
+			  selectStmt.setString(1,employee.getEmployeeId());   
 			  ResultSet rs = selectStmt.executeQuery();
 			  
 			  if(!rs.next()) {
-				  System.out.println("Employee with Id" + employeeId + " not found");
+				  System.out.println("Employee with Id" + employee.getEmployeeId() + " not found");
 				  return;   
 			  }
 			  String currentContacts = rs.getString("contacts");
 			  String currentEmail = rs.getString("email");
 			  
 			  //compare new data with current data
-			  if(currentContacts.equals(newContacts)&&currentEmail.equals(currentEmail)) {
+			  if(currentContacts.equals(employee.getContacts())&&currentEmail.equals(employee.getEmail())) {
 				  System.out.println("No changes detected. Email and Contacts already same.");
 				  return;
 			  }
 			  
 			  try(PreparedStatement updateStmt = con.prepareStatement(updateQuery)){
-				  updateStmt.setString(1, newContacts);
-				  updateStmt.setString(2, newEmail);
-				  updateStmt.setString(3, employeeId);
+				  updateStmt.setString(1, employee.getContacts());
+				  updateStmt.setString(2,  employee.getEmail());
+				  updateStmt.setString(3, employee.getEmployeeId());
 				  
 				  int rows = updateStmt.executeUpdate();
 				  if(rows>0) {
@@ -119,10 +121,10 @@ public class Storage {
 	}
 		
 		//Delete (Single Employees)
-		public void delete(String employeeId) throws Exception {
-			String query =  "DELETE FROM employee WHERE id=?";
+		public void delete(Employee employee) throws Exception {
+			String query =  "DELETE FROM employees WHERE id=?";
 			try(Connection con = getConnection(); PreparedStatement ps = con.prepareStatement(query)){
-				ps.setString(1, employeeId);
+				ps.setString(1, employee.getEmployeeId());
 				int rows = ps.executeUpdate();
 				
 				if(rows>0) {
@@ -140,7 +142,7 @@ public class Storage {
 		
 		//DELETE ALL
 		
-		public void removeALL() throws SQLException {
+		public void removeALL(Employee employee) throws SQLException {
 			String query = "DELETE FROM employees";
 			try(Connection con = getConnection(); PreparedStatement ps = con.prepareStatement(query)){
 				int rows = ps.executeUpdate();

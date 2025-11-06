@@ -6,6 +6,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
 
+import com.example.demo.model.Employee;
 import com.example.demo.service.CrudService;
 
 @SpringBootApplication
@@ -15,6 +16,7 @@ public class DemoApplication {
 		
 		
 		CrudService crudService = new CrudService();
+		Employee employee= new Employee();
 		ApplicationContext context =SpringApplication.run(DemoApplication.class, args);
 		// CRUD operations via terminal
 
@@ -28,26 +30,23 @@ public class DemoApplication {
 				System.out.println("Create operation selected.");
 				// Add create logic here
 				System.out.println("\n Enter Employee Details:\n ");
-				Scanner detailScanner = new Scanner(System.in);
 				System.out.println("\n Enter Employee Name: ");
-				//detailScanner.nextLine();
-				String employeeName = detailScanner.nextLine();
+				employee.setEmployeeName(scanner.nextLine());
 				System.out.println("\n Enter Employee ID: ");
-				String employeeId = detailScanner.next();
+				employee.setEmployeeId(scanner.next());
 				System.out.println("\n Enter Employee Contacts: ");
-				String contacts = detailScanner.next();
+				employee.setContacts(scanner.next());
 				System.out.println("\n Enter Employee Gender :");
-                String gender = detailScanner.next();
+				employee.setGender(scanner.next());
 				System.out.println("\n Enter Employee Email-Id : ");
-				String email = detailScanner.next();
+				employee.setEmail(scanner.next());
 				System.out.println("\n Enter Employee Address : ");
-				detailScanner.nextLine();
-				String address = detailScanner.nextLine();
+				employee.setAddress(scanner.next());
 				System.out.println("\n Enter Employee Salary : ");
-                String salary = detailScanner.next();
+                employee.setSalary(scanner.next());
 				System.out.println("\n Enter Employee Department : ");
-				String dept = detailScanner.next();
-				crudService.create(employeeName, employeeId, contacts, gender, email, address, salary, dept);
+				employee.setDepartment(scanner.next());
+				crudService.create(employee);
 				break;
 			case 2:
 				System.out.println("Get all employees");
@@ -59,25 +58,26 @@ public class DemoApplication {
 				System.out.println("\nUpdate operation selected.");
 				// Add update logic here
 				System.out.println("Enter  Your Employee ID to update: ");
-                String updateId = sc.next();
+                employee.setEmployeeId(sc.next());
          
                 System.out.println("Enter New Contacts: ");
-                String newContacts = sc.next();
+                employee.setContacts(sc.next());
                 
 				System.out.println("Enter Employee Email-Id: ");
-				String newEmail = sc.next();
-				crudService.update(updateId, newEmail, newContacts);
+				employee.setEmail(sc.next());
+				crudService.update(employee);
 				break;
 			case 4:
 				System.out.println("Delete operation selected.");
+			
 				// Add delete logic here
 				System.out.println("Enter Employees Id to delete : ");
-				String deleteId = scanner.next();
-				crudService.delete(deleteId);
+				 employee.setEmployeeId(scanner.next());
+				crudService.delete(employee);
 				break;
 			case 5:
 				 System.out.println("Delete all operations.");
-				 crudService.remove();
+				 crudService.remove(employee);
 				 break;
 			default:
 				System.out.println("Invalid choice. Please select a valid option.");
